@@ -8,7 +8,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 // var watson = require('./watson')
 var watson  = require('watson-developer-cloud');
-const vcapServices = require('vcap_services');
+// const vcapServices = require('vcap_services');
 const cors = require('cors')
 
 var index = require('./routes/index');
@@ -33,42 +33,41 @@ app.use('/users', users);
 
 
 
-// on bluemix, enable rate-limiting and force https
-if (process.env.VCAP_SERVICES) {
-  // enable rate-limiting
-  const RateLimit = require('express-rate-limit');
-  app.enable('trust proxy'); // required to work properly behind Bluemix's reverse proxy
+// // on bluemix, enable rate-limiting and force https
+// if (process.env.VCAP_SERVICES) {
+//   // enable rate-limiting
+//   const RateLimit = require('express-rate-limit');
+//   app.enable('trust proxy'); // required to work properly behind Bluemix's reverse proxy
 
-  const limiter = new RateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    delayMs: 0 // disable delaying - full speed until the max limit is reached
-  });
+//   const limiter = new RateLimit({
+//     windowMs: 15 * 60 * 1000, // 15 minutes
+//     max: 100, // limit each IP to 100 requests per windowMs
+//     delayMs: 0 // disable delaying - full speed until the max limit is reached
+//   });
 
-  //  apply to /api/*
-  app.use('/api/', limiter);
+//   //  apply to /api/*
+//   app.use('/api/', limiter);
 
-  // force https - microphone access requires https in Chrome and possibly other browsers
-  // (*.mybluemix.net domains all have built-in https support)
-  const secure = require('express-secure-only');
-  app.use(secure());
-}
+//   // force https - microphone access requires https in Chrome and possibly other browsers
+//   // (*.mybluemix.net domains all have built-in https support)
+//   const secure = require('express-secure-only');
+//   app.use(secure());
+// }
 
 var sttAuthService = new watson.AuthorizationV1(
-  Object.assign(
+  // Object.assign(
     {
       username: process.env.WATSONUSERNAME, 
       password: process.env.WATSONPASSWORD
-    },
-    vcapServices.getCredentials('speech_to_text') 
-  )
+    }//,
+    // vcapServices.getCredentials('speech_to_text') 
+  // )
 );
 
 app.use('/api/speech-to-text/token', function(req, res) {
-  console.log(sttAuthService)
   sttAuthService.getToken(
     {
-      url: 'https://stream.watsonplatform.net/text-to-speech/api'
+      url: watson.TextToSpeechV1.URL
     },
     function(err, token) {
       if (err) {
@@ -80,7 +79,7 @@ app.use('/api/speech-to-text/token', function(req, res) {
     }
   );
 });
-if (!process.env.VCAP_SERVICES) {
+// if (!process.env.VCAP_SERVICES) {
   const fs = require('fs');
   const https = require('https');
   const HTTPS_PORT = 3002;
@@ -92,7 +91,7 @@ if (!process.env.VCAP_SERVICES) {
   https.createServer(options, app).listen(HTTPS_PORT, function() {
     console.log('Secure server live at https://localhost:%s/', HTTPS_PORT);
   });
-}
+// }
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

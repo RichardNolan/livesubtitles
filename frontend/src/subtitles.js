@@ -16,7 +16,6 @@ class Subtitles extends Component {
         fetch('http://localhost:3001/api/speech-to-text/token')
             .then(response=> response.text())
             .then(token=> {
-                console.log(token)
                 const stream = mic({
                     token: token,
                     objectMode: true,
